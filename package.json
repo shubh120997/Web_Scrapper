@@ -1,0 +1,26 @@
+{
+  "name": "website-scrapping-be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --env-file=.env server.js",
+    "prod": "node --env-file=.env server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "body-parser": "^1.20.2",
+    "cheerio": "^1.0.0-rc.12",
+    "circular-json": "^0.5.9",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "flatted": "^3.3.1",
+    "http-status": "^1.7.4",
+    "mongoose": "^8.4.4",
+    "puppeteer": "^22.12.1"
+  }
+}
