@@ -1,10 +1,12 @@
-const { default: mongoose } = require("mongoose");
-const { dbConn } = require("../config/database");
-
+const { dbConn, mongoose } = require("../config/database");
 const { COMPANY } = require('../constant/model_name');
 
 const company_schema = new mongoose.Schema(
   {
+    companyUrl: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       default: null
@@ -49,7 +51,7 @@ const company_schema = new mongoose.Schema(
       type: String,
       default: null
     },
-    is_deleted: {
+    isDeleted: {
       type: Boolean,
       default: false
     }

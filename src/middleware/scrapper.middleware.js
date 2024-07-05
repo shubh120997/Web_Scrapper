@@ -3,18 +3,10 @@ const { BAD_REQUEST, INTERNAL_SERVER_ERROR } = require('http-status');
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
 const path = require('path');
-const { date } = require("yup");
-
 
 const scrapWebSite = async(req, res, next) => {
   try {
     const url = req.body.url;
-    if (!url) {
-      return res.status(BAD_REQUEST).json({
-        status: false,
-        message: "Please input a webiste url to scrap."
-      })
-    }
     const response = await axios.get(url);
     const $ = cheerio.load(response.data);
 
@@ -26,19 +18,26 @@ const scrapWebSite = async(req, res, next) => {
 
     // fetch icon
     const icon = fetchIcon($);
-    
+
     // fetch facebook url
     const social_urls = fetchSocialUrls($);
 
-    // const screenshot_path = await screenshotOfHomePageOfUrl(url)
-    return res.json({
-      site_name, description, ...facebook_url
-    })
+    // fetch contact details
+    const contact_details = fetchContactDetails($);
+
+    // screenshot of homepage
+    const screenshot_path = await screenshotOfHomePageOfUrl(url);
+
+    res.scrap_data = {
+      site_name, description, icon, ...social_urls, ...contact_details, screenshot_path
+    }
+
+    next();
   } catch (error) {
     if (error.code === 'ENOTFOUND') {
       return res.status(BAD_REQUEST).json({
         status: false,
-        message: "The website URL could not be scrapped. Please check the URL and try again."
+        message: "The company URL could not be scrapped. Please check the URL and try again."
       });
     }
 
@@ -68,7 +67,6 @@ const fetchNameOfUrl = ($) => {
       return null;
     }
   } catch (error) {
-    console.log("🚀 ~ fethcNameOfUrl ~ error:", error);
     throw error;
   }
 };
@@ -83,7 +81,6 @@ const fetchDescriptionOfUrl = ($) => {
       return null;
     }
   } catch (error) {
-    console.log("🚀 ~ fetchDescriptionOfUrl ~ error:", error);
     throw error;
   }
 }
@@ -94,14 +91,13 @@ const fetchIcon = ($) => {
     if (icon) return icon.trim();
     return icon;
   } catch (error) {
-    console.log("🚀 ~ fetchIcon ~ error:", error);
     throw error;
   }
 }
 
 const fetchSocialUrls = ($) => {
   try {
-    let facebook_url, twitter_url, linkedin_url, instagram_url;
+    let facebook_url = null, twitter_url = null, linkedin_url = null, instagram_url = null;
     $('a').each((i, elem) => {
       const href = $(elem).attr('href');
       if (!facebook_url && href?.includes('facebook.com')) {
@@ -119,26 +115,37 @@ const fetchSocialUrls = ($) => {
     });
     return {facebook_url, twitter_url, linkedin_url, instagram_url};
   } catch (error) {
-    console.log("🚀 ~ fetchFacebookUrl ~ error:", error);
     throw error;
   }
 };
 
+const fetchContactDetails = ($) => {
+  try {
+    const email = $('a[href^="mailto:"]').attr('href')?.replace('mailto:', '').trim() || null;
+    const phone_number = $('a[href^="tel:"]').attr('href')?.replace('tel:', '').trim() || null;
+    const address = $('.address').first().text()?.replace(/\n\s+/g, '').trim() || null;
+
+    return {
+      email, phone_number, address
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
 const screenshotOfHomePageOfUrl = async (url) => {
   try {
-    // Take a screenshot of the homepage using Puppeteer
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000*2 });
     const screenshotPath = path.join(__dirname, '../', `/public/screenshot/${Date.now()}.png`);
     await page.screenshot({ path: screenshotPath });
     await browser.close();
     return screenshotPath;
   } catch (error) {
-    console.log("🚀 ~ screenshotOfHomePageOfUrl ~ error:", error);
     throw error;
   }
-}
+};
 
 module.exports = {
   scrapWebSite

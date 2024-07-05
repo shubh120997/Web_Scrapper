@@ -4,11 +4,13 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const { dbConn } = require('./src/config/database');
 const scrapeData = require('./scrapper');
+const path = require('path');
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.post("/scrape", scrapeData);
 app.use("/api", require('./src/routes'));
