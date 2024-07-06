@@ -96,7 +96,7 @@ const getAllCompanies = async (req, res) => {
 
 const exportCompaniesToCsv = async (req, res) => {
   try {
-    const projection = { _id: 0, isDeleted: 0, createdAt: 0, screenshot: 0, }
+    const projection = { _id: 0, isDeleted: 0, createdAt: 0 }
     const companies = await CompanyModel.find({isDeleted: false}, projection).sort({ updatedAt: -1 }).lean();
 
     const csvData = companies.map((company, index) => ({
@@ -122,7 +122,6 @@ const exportCompaniesToCsv = async (req, res) => {
         { id: 'phone', title: 'Phone' },
         { id: 'email', title: 'Email' },
         { id: 'screenshot', title: 'Screenshot' },
-        { id: 'relatedId', title: 'Related ID' }
       ]
     });
 

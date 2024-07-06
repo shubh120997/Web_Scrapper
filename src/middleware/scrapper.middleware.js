@@ -3,6 +3,8 @@ const { BAD_REQUEST, INTERNAL_SERVER_ERROR } = require('http-status');
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const fs = require('fs');
+const { imageUpload } = require('../utils/aws');
 
 const scrapWebSite = async(req, res, next) => {
   try {
@@ -138,10 +140,21 @@ const screenshotOfHomePageOfUrl = async (url) => {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000*2 });
-    const screenshotPath = path.join(__dirname, '../', `/public/screenshot/${Date.now()}.png`);
+    const fileName = `${Date.now()}.png`;
+    const screenshotPath = path.join(__dirname, '../', `/public/screenshot/${fileName}`);
     await page.screenshot({ path: screenshotPath });
     await browser.close();
-    return screenshotPath;
+
+    // Upload screenshot to S3
+    const body = fs.createReadStream(screenshotPath);
+    const aws_url = await imageUpload(body, fileName);
+
+    fs.unlink(screenshotPath, (unlinkErr) => {
+      if (unlinkErr) {
+        console.error('Error deleting the file:', unlinkErr);
+      }
+    });
+    return aws_url;
   } catch (error) {
     throw error;
   }
